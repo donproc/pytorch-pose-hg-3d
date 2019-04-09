@@ -6,8 +6,10 @@ import cv2
 import ref
 from progress.bar import Bar
 from utils.debugger import Debugger
+from tensorboardX import SummaryWriter
 
 def step(split, epoch, opt, dataLoader, model, criterion, optimizer = None):
+  print('epoch', epoch)
   if split == 'train':
     model.train()
   else:
@@ -17,11 +19,12 @@ def step(split, epoch, opt, dataLoader, model, criterion, optimizer = None):
   
   nIters = len(dataLoader)
   bar = Bar('{}'.format(opt.expID), max=nIters)
-  
+  writer = SummaryWriter()
   for i, (input, target, meta) in enumerate(dataLoader):
     input_var = torch.autograd.Variable(input).float().cuda(opt.GPU)
     target_var = torch.autograd.Variable(target).float().cuda(opt.GPU)
     output = model(input_var)
+    print(epoch, i, input_var.shape[0])
     
     if opt.DEBUG >= 2:
       gt = getPreds(target.cpu().numpy()) * 4
@@ -37,12 +40,14 @@ def step(split, epoch, opt, dataLoader, model, criterion, optimizer = None):
     for k in range(1, opt.nStack):
       loss += criterion(output[k], target_var)
 
-    Loss.update(loss.data[0], input.size(0))
+    Loss.update(loss.item(), input.size(0))
     Acc.update(Accuracy((output[opt.nStack - 1].data).cpu().numpy(), (target_var.data).cpu().numpy()))
     if split == 'train':
       optimizer.zero_grad()
       loss.backward()
       optimizer.step()
+      writer.add_scalar('train/loss', loss.item(), i + (epoch - 1) * len(dataLoader))
+      # writer.add_scalar('train/accuracy', Accuracy.item())
     else:
       input_ = input.cpu().numpy()
       input_[0] = Flip(input_[0]).copy()

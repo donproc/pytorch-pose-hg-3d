@@ -26,10 +26,10 @@ hmGauss = 1
 #shiftPX = 50
 #disturb = 10
 
-rootDir = '/home/zxy/Projects/DataSelection/'
+rootDir = '/home/rock/Projects/DataSelection/'
 dataDir = rootDir + 'data'
 expDir = rootDir + 'exp'
-mpiiImgDir = '/home/zxy/Datasets/mpii/images/'
-h36mImgDir = '/home/zxy/Datasets/Human3.6M/images/'
+mpiiImgDir = '/home/rock/Projects/DataSelection/data/mpii/images/'
+# h36mImgDir = '/home/rock/Datasets/Human3.6M/images/'
 
 nThreads = 2

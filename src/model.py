@@ -27,7 +27,7 @@ def getModel(opt):
         model.fc = nn.Linear(512 * 1, opt.outputDim)
       else :
         model.fc = nn.Linear(512 * 4, opt.outputDim)
-      print 'reset classifier', opt.outputDim
+      print('reset classifier', opt.outputDim)
     if opt.arch.startswith('densenet'):
       if '161' in opt.arch:
         model.classifier = nn.Linear(2208, opt.outputDim)

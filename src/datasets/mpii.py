@@ -6,10 +6,11 @@ from h5py import File
 import cv2
 from utils.utils import Rnd, Flip, ShuffleLR
 from utils.img import Crop, DrawGaussian, Transform
+import os
 
 class MPII(data.Dataset):
   def __init__(self, opt, split):
-    print '==> initializing 2D {} data.'.format(split)
+    print('==> initializing 2D {} data.'.format(split))
     annot = {}
     tags = ['imgname','part','center','scale']
     f = File('{}/mpii/annot/{}.h5'.format(ref.dataDir, split), 'r')
@@ -17,14 +18,14 @@ class MPII(data.Dataset):
       annot[tag] = np.asarray(f[tag]).copy()
     f.close()
 
-    print 'Loaded 2D {} {} samples'.format(split, len(annot['scale']))
+    print('Loaded 2D {} {} samples'.format(split, len(annot['scale'])))
     
     self.split = split
     self.opt = opt
     self.annot = annot
   
   def LoadImage(self, index):
-    path = '{}/{}'.format(ref.mpiiImgDir, self.annot['imgname'][index])
+    path = '{}/{}'.format(ref.mpiiImgDir, self.annot['imgname'][index].decode('ascii'))#
     img = cv2.imread(path)
     return img
   

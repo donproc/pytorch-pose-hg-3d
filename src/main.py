@@ -11,18 +11,26 @@ from datasets.mpii import MPII
 from utils.logger import Logger
 from train import train, val
 import scipy.io as sio
+from tensorboardX import SummaryWriter
+from torch.utils.data.sampler import RandomSampler
+from torch.utils.data.sampler import BatchSampler
 
 def main():
   opt = opts().parse()
   now = datetime.datetime.now()
   logger = Logger(opt.saveDir, now.isoformat())
   model, optimizer = getModel(opt)
+  writer = SummaryWriter()
+
+
   criterion = torch.nn.MSELoss()
 
   if opt.GPU > -1:
-    print 'Using GPU', opt.GPU
+    print('Using GPU', opt.GPU)
     model = model.cuda(opt.GPU)
     criterion = criterion.cuda(opt.GPU)
+    dummyinput = torch.rand(1, 3, 256, 256, dtype=torch.float32).to('cuda')
+    writer.add_graph(model, (dummyinput,), verbose=False)
 
 
   val_loader = torch.utils.data.DataLoader(
@@ -39,12 +47,22 @@ def main():
 
   train_loader = torch.utils.data.DataLoader(
       MPII(opt, 'train'), 
-      batch_size = opt.trainBatch, 
+      # batch_size = opt.trainBatch,
       shuffle = True if opt.DEBUG == 0 else False,
       num_workers = int(ref.nThreads)
   )
 
+  #add
+  rs = RandomSampler(MPII(opt, 'train'))
+  bs = BatchSampler(rs, batch_size=8, drop_last=False)
+  train_loader.batch_sampler = bs
+  #add_end
   for epoch in range(1, opt.nEpochs + 1):
+    #add
+    if  epoch == 2:
+      bs = BatchSampler(rs, batch_size=16, drop_last=False)
+      train_loader.batch_sampler = bs
+    #add_end
     log_dict_train, _ = train(epoch, opt, train_loader, model, criterion, optimizer)
     for k, v in log_dict_train.items():
       logger.scalar_summary('train_{}'.format(k), v, epoch)
@@ -60,7 +78,7 @@ def main():
     logger.write('\n')
     if epoch % opt.dropLR == 0:
       lr = opt.LR * (0.1 ** (epoch // opt.dropLR))
-      print 'Drop LR to', lr
+      print('Drop LR to', lr)
       adjust_learning_rate(optimizer, lr)
   logger.close()
   torch.save(model.cpu(), os.path.join(opt.saveDir, 'model_cpu.pth'))
